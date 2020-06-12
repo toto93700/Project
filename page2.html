@@ -1,0 +1,331 @@
+<html>
+	<head>
+<script type="text/javascript" src="processing.js"> </script>
+<title> Projet 2 </title>
+
+</head>
+    <body>
+	<p> Dans cette autre  programme réalisé en proccesing vous pourrez jouer au célèbre jeux hors-ligne avec une vitesse augmenté proportionelemnt au score   <p>
+	  <script type="text/processing">
+        //
+// importation de la librairie son
+//
+//import processing.sound.*;
+// j'ai evité les fichier son faisant bug le jeux quand celui-ci etait en ligne sur internet 
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// les variables associées aux ressources
+//
+////////////////////////////////////////////////////////////////////////////////////////
+// les images
+PImage solImg;
+PImage f; //image dino Mort
+PImage a; //on définit a comme contenant une image a=image dino saut 1
+PImage b; //image dino sau2
+PImage c;//image dino saut
+PImage d; //image cactus1
+PImage e;//image cactus 2
+PImage pteuro1; // image dinoup
+PImage pteuro2; //image dinodown
+
+// les sons
+//SoundFile sonCent; 
+//SoundFile sonSaut;
+//SoundFile sonBoom;
+// la police de caractères
+PFont myFont;
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// les variables associées aux sprites
+//
+////////////////////////////////////////////////////////////////////////////////////////
+// le niveau du sol
+int baseY;
+// la vitesse de défilement horizontale
+float vitesseX;
+
+// les coordonnées du sol
+float sol1x, sol2x, sol3x;
+/////////////////////////////
+//
+// est-ce que c'est fini ?
+boolean gameOver;
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// les paramètres généraux
+//
+////////////////////////////////////////////////////////////////////////////////////////
+float swap;
+boolean x;
+int y;//hauteur de l'image du dino
+int z;//variation de la hauteur de l'image du dino
+int p; //coordoné en x du cactus 1
+int m; //coordoné en x du cactus 2
+int q; // variable qui calcule le nbr d'image défilé depuis le début  
+int score; // variable score qui s'increment de 1 tout les 5 images
+float Xpteuro1; // coordooné en x des 2image de pteuro 
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// Initialisation générale
+//
+////////////////////////////////////////////////////////////////////////////////////////
+void setup() {
+  frameRate(50);
+  // choisit la taille de la fenêtre
+  size(1200, 500);
+// initialise mes variable 
+  swap=0;
+  x=true;
+  z=7;//(vitesse du saut)
+  y=350;
+  q=1;
+
+
+  score=1; // obligé de mettre score a 1 car sinnon  le son du score%100 ce joue en permanence s'y on est en gameover 
+
+  // crée la fonte
+  myFont = createFont("joystix.ttf", 32);
+  textFont(myFont);
+  textAlign(CENTER, CENTER);
+  fill(64);
+
+  // charge les images
+  imageMode(CENTER);
+  solImg = loadImage("sol.png");
+  d = loadImage("cactus1.png");
+  e =loadImage("cactus2.png");
+  a = loadImage("dinoMarche1.png");
+  b = loadImage("dinoMarche2.png");
+  c =loadImage("dinoSaut.png");
+  f=loadImage("dinoMort.png");
+  pteuro1 = loadImage("PterodactyleUp.png");
+  pteuro2 = loadImage("PterodactyleDown.png");
+
+
+  // charge les sons
+  //sonCent = new SoundFile(this, "cent.mp3");
+  //sonSaut = new SoundFile(this, "saut.mp3");
+  //sonBoom = new SoundFile(this, "boom.mp3");
+
+  initJeu();
+  gameOver = true;
+}
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// Initialisation des variables pour une nouvelle partie
+//
+////////////////////////////////////////////////////////////////////////////////////////
+   void initJeu() {
+  // la hauteur du sol
+  baseY = height * 3 / 4;
+  // la vitesse de défilement
+  vitesseX =8;
+ // initialise le sol
+  sol1x = 300;
+  sol2x = 900;
+  sol3x = 1500;
+ // initialisations générales
+  gameOver = false;
+}
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// Boucle de rendu
+//
+////////////////////////////////////////////////////////////////////////////////////////
+void draw() {
+  if (score%100==0) {
+    vitesseX=1.03*vitesseX;//augmeentation de la vitesse de defillment en fonction du score [bonus] diffuculté progressive 
+  }
+  background(255);
+ // met à jour l'affichage
+  afficheScore();
+  afficheSprites();
+
+  // si le jeu n'est pas terminé
+  if (!gameOver) {
+
+    calculeScore();
+    testeCollisions();
+    mouvementSol();
+    mouvementCactus();
+    mouvementDino();
+  }
+  // sinon
+  else {
+    textAlign(CENTER);
+    text("G A M E  O V E R", width/2, (height/3)-100);
+    text("apuyyer sur espace pour commencer une partie", width/2, (height/2)-100);
+    image(f, 100, y);
+    vitesseX=0;
+    mouvementCactus();
+  }
+}
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// calcule le score et joue un son tous les 100 
+//
+////////////////////////////////////////////////////////////////////////////////////////
+void calculeScore() {
+  q++;
+  if (q%5==0) // Variable qui calcule toutes les 5 images 
+   { score++;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// teste la collision entre le dino et un cactus
+//
+////////////////////////////////////////////////////////////////////////////////////////
+void testeCollisions() {
+  if ((100-46<=p && p<=140 && y>=350-86 && y<=350) || (100-98<=m && m<=100+58 && y>=350-66 && y<=350) || (100-60<=Xpteuro1 && Xpteuro1<=180 && y<265) ) {
+    //sonBoom.play();
+    gameOver=true; // si dino touche un cactus ou pteuro alors => gameover
+  } // distance de colision (je l'est reduite sur certaine valeur car la 'hitbox' ne correspondait pas avec le format du png
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// calcule le mouvement du sol
+//
+////////////////////////////////////////////////////////////////////////////////////////
+void mouvementSol() {
+  // fait défiler le sol
+  sol1x -= vitesseX;
+  sol2x -= vitesseX;
+  sol3x -= vitesseX;
+
+
+  // le sol réapparaît à droite quand il a disparu à gauche
+  if (sol1x < -300)
+    sol1x += 1800;
+  if (sol2x < -300)
+    sol2x += 1800;
+  if (sol3x < -300)
+    sol3x += 1800;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// calcule le mouvement des cactus
+// ET le movuement des pteurodactyle [bonus]
+//
+////////////////////////////////////////////////////////////////////////////////////////
+void mouvementCactus() {
+  p-=vitesseX;
+  if (p<-300)
+    p+=1500;
+  m-=vitesseX;
+  if (m<-930)
+    m+=3000;
+  image(d, p, 350);
+  image(e, m, 375);
+  Xpteuro1-=vitesseX;
+  if (Xpteuro1<-300+250)
+  Xpteuro1+=3400;
+  if (swap==0 || swap==1 || swap==2 || swap==3 || swap==4 || swap==5)
+  image(pteuro1,Xpteuro1,205);
+  if (swap==6 || swap==7 || swap==8 || swap==9 || swap==10)
+   image(pteuro2,Xpteuro1,205);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// calcule le mouvement du dino gere la gravité et vitesse de saut ici vitesse de 'saut'='gravité'
+//
+////////////////////////////////////////////////////////////////////////////////////////
+void mouvementDino() {
+  if (x==false) {
+    image(c, 100, y);
+    y=y-z;
+  }
+
+  if (y<150) {
+    z=(-1*z);
+  }
+  if (y>360) {
+    z=-1*z;
+    x=true;
+    y=350;
+  }
+  if ((swap == 0 || swap==1 || swap==2 || swap==3 || swap==4 || swap==5)&& y==350) {
+    image(a, 100, 350);
+  } else {
+    if ((swap==6 || swap==7 ||swap==8 ||swap==9||swap==10 )&&y==350)
+    { 
+      image(b, 100, 350);
+    }
+  }
+  swap=(swap+1)%11;// permet une alternation d'image 
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// gère l'affichage du score en ajoutant des zéros au besoin 
+//
+////////////////////////////////////////////////////////////////////////////////////////
+void afficheScore() {
+
+  text("score = "+ score, 1015, 30);
+  if (score%100==0)
+  { 
+   // sonCent.play();
+  }
+  textAlign(CENTER);
+  text("vitesse ="+ int(vitesseX-6), 175, 30);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// affiche les éléments mobiles du jeu
+//
+////////////////////////////////////////////////////////////////////////////////////////
+void afficheSprites() {
+  // affiche le sol
+  image(solImg, sol1x, baseY + 25);
+  image(solImg, sol2x, baseY + 25);
+  image(solImg, sol3x, baseY + 25);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// - fait sauter le dino quand on appuie sur la flèche du haut
+// - redémarre le jeu quand on appuie sur la barre d'espace
+//
+////////////////////////////////////////////////////////////////////////////////////////
+void keyPressed() {
+  if ((key == ' ') && gameOver) {
+    x=true;
+    p=600;
+    m=1500;
+    y=350;
+    score=1;
+    q=1;
+    
+    Xpteuro1=900;
+
+    initJeu();
+  } else {
+    if ((key == ' ') && gameOver==false)
+
+      gameOver=true;
+  }
+
+  if (key == CODED) {
+    if ((keyCode == UP) && x==true ) {
+      x=false;    
+      //sonSaut.play(1);
+    }
+  }
+}
+	  
+	  
+			</script>
+           <canvas id="sketch" style="border :1px solid black;"></canvas>
+ 
+
+ </html>
